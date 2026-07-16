@@ -40,6 +40,12 @@ services:
       - "27017:27017"
     volumes:
       - ./compose/mongo/tenant-init.js:/docker-entrypoint-initdb.d/tenant-init.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "-u", "tenant_root", "-p", "tenant_root_password", "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
 
   physician-db:
     image: postgres:18-alpine
@@ -86,6 +92,12 @@ services:
       - "27018:27017"
     volumes:
       - ./compose/mongo/notification-init.js:/docker-entrypoint-initdb.d/notification-init.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "-u", "notification_root", "-p", "notification_root_password", "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
 
   tenant-service:
     init: true
@@ -95,15 +107,24 @@ services:
     ports:
       - "8081:8081"
     environment:
-      SPRING_DATA_MONGODB_URI: mongodb://tenant_user:tenant_password@tenant-db:27017/tenantdb?authSource=tenantdb
+      SPRING_DATA_MONGODB_HOST: tenant-db
+      SPRING_DATA_MONGODB_PORT: 27017
+      SPRING_DATA_MONGODB_DATABASE: tenantdb
+      SPRING_DATA_MONGODB_USERNAME: tenant_user
+      SPRING_DATA_MONGODB_PASSWORD: tenant_password
+      SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE: tenantdb
       PATIENT_GRPC_TARGET: patient-service:9093
       PHYSICIAN_GRPC_TARGET: physician-service:9092
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
     depends_on:
-      - tenant-db
-      - patient-service
-      - physician-service
-      - discovery-server
+      tenant-db:
+        condition: service_healthy
+      patient-service:
+        condition: service_started
+      physician-service:
+        condition: service_started
+      discovery-server:
+        condition: service_started
 
   physician-service:
     init: true
@@ -175,7 +196,12 @@ services:
     ports:
       - "8086:8086"
     environment:
-      SPRING_DATA_MONGODB_URI: mongodb://notification_user:notification_password@notification-db:27017/notificationdb?authSource=notificationdb
+      SPRING_DATA_MONGODB_HOST: notification-db
+      SPRING_DATA_MONGODB_PORT: 27017
+      SPRING_DATA_MONGODB_DATABASE: notificationdb
+      SPRING_DATA_MONGODB_USERNAME: notification_user
+      SPRING_DATA_MONGODB_PASSWORD: notification_password
+      SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE: notificationdb
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_USERNAME: healthcare_admin
       SPRING_RABBITMQ_PASSWORD: healthcare_admin
@@ -183,8 +209,13 @@ services:
       PHYSICIAN_GRPC_TARGET: physician-service:9092
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
     depends_on:
-      - notification-db
-      - rabbitmq
-      - patient-service
-      - physician-service
-      - discovery-server
+      notification-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      patient-service:
+        condition: service_started
+      physician-service:
+        condition: service_started
+      discovery-server:
+        condition: service_started

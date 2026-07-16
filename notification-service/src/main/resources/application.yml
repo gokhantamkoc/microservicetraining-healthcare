@@ -6,7 +6,12 @@ spring:
     name: notification-service
   data:
     mongodb:
-      uri: ${SPRING_DATA_MONGODB_URI:mongodb://notification_user:notification_password@localhost:27018/notificationdb?authSource=notificationdb}
+      host: ${SPRING_DATA_MONGODB_HOST:localhost}
+      port: ${SPRING_DATA_MONGODB_PORT:27018}
+      database: ${SPRING_DATA_MONGODB_DATABASE:notificationdb}
+      username: ${SPRING_DATA_MONGODB_USERNAME:notification_user}
+      password: ${SPRING_DATA_MONGODB_PASSWORD:notification_password}
+      authentication-database: ${SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE:notificationdb}
   rabbitmq:
     host: ${SPRING_RABBITMQ_HOST:localhost}
   graphql:
