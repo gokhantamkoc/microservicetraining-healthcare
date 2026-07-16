@@ -4,22 +4,20 @@ server:
 spring:
   application:
     name: tenant-service
-  data:
-    mongodb:
-      host: ${SPRING_DATA_MONGODB_HOST:localhost}
-      port: ${SPRING_DATA_MONGODB_PORT:27017}
-      database: ${SPRING_DATA_MONGODB_DATABASE:tenantdb}
-      username: ${SPRING_DATA_MONGODB_USERNAME:tenant_user}
-      password: ${SPRING_DATA_MONGODB_PASSWORD:tenant_password}
-      authentication-database: ${SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE:tenantdb}
+  mongodb:
+    host: ${SPRING_MONGODB_HOST:tenant-db}
+    port: ${SPRING_MONGODB_PORT:27017}
+    database: ${SPRING_MONGODB_DATABASE:tenantdb}
   graphql:
     graphiql:
       enabled: true
 
 grpc:
   clients:
-    patient-target: ${PATIENT_GRPC_TARGET:localhost:9093}
-    physician-target: ${PHYSICIAN_GRPC_TARGET:localhost:9092}
+    patient-service-id: ${PATIENT_GRPC_SERVICE_ID:patient-service}
+    patient-port: ${PATIENT_GRPC_PORT:9093}
+    physician-service-id: ${PHYSICIAN_GRPC_SERVICE_ID:physician-service}
+    physician-port: ${PHYSICIAN_GRPC_PORT:9092}
 
 eureka:
   client:
