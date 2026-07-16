@@ -1,0 +1,28 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: checkout-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5437/checkoutdb}
+    username: ${SPRING_DATASOURCE_USERNAME:healthcare}
+    password: ${SPRING_DATASOURCE_PASSWORD:healthcare}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    defer-datasource-initialization: true
+    open-in-view: false
+  sql:
+    init:
+      mode: always
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+  graphql:
+    graphiql:
+      enabled: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}

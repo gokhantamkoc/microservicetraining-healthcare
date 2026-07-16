@@ -1,0 +1,22 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: tenant-service
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://tenant_user:tenant_password@localhost:27017/tenantdb?authSource=tenantdb}
+  graphql:
+    graphiql:
+      enabled: true
+
+grpc:
+  clients:
+    patient-target: ${PATIENT_GRPC_TARGET:localhost:9093}
+    physician-target: ${PHYSICIAN_GRPC_TARGET:localhost:9092}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}

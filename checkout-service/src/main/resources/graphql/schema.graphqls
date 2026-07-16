@@ -1,0 +1,22 @@
+type Query {
+  checkoutStatus(id: ID!): CheckoutSession
+}
+
+type Mutation {
+  startCheckout(tenantId: ID!, patientId: ID!, amount: String!): CheckoutSession!
+}
+
+type CheckoutSession {
+  id: ID!
+  tenantId: ID!
+  patientId: ID!
+  amount: String!
+  status: CheckoutStatus!
+}
+
+enum CheckoutStatus {
+  STARTED
+  PAID
+  FAILED
+}
+

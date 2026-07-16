@@ -1,0 +1,53 @@
+type Query {
+  tenants: [Tenant!]!
+  appointments(tenantId: ID!): [Appointment!]!
+  appointmentAsyncStatus(operationId: String!): AppointmentOperationStatus!
+  announcements(tenantId: ID!): [Announcement!]!
+}
+
+type Mutation {
+  createTenant(name: String!, location: String!, provider: NotificationProvider!): Tenant!
+  createAppointment(tenantId: ID!, patientId: ID!, physicianId: ID!, startsAt: String!): Appointment!
+  createAppointmentAsync(tenantId: ID!, patientId: ID!, physicianId: ID!, startsAt: String!): AppointmentOperationStatus!
+  createAnnouncement(tenantId: ID!, title: String!, body: String!): Announcement!
+}
+
+type Tenant {
+  id: ID!
+  name: String!
+  location: String!
+  notificationProvider: NotificationProvider!
+}
+
+enum NotificationProvider {
+  AWS_SNS
+  TWILIO
+  FCM
+}
+
+type Appointment {
+  id: ID!
+  tenantId: ID!
+  patientId: ID!
+  physicianId: ID!
+  patientName: String
+  physicianName: String
+  physicianSpecialty: String
+  startsAt: String!
+  status: String!
+}
+
+type AppointmentOperationStatus {
+  operationId: String!
+  status: String!
+  appointment: Appointment
+  errorMessage: String
+}
+
+type Announcement {
+  id: ID!
+  tenantId: ID!
+  title: String!
+  body: String!
+  publishedAt: String!
+}

@@ -1,0 +1,677 @@
+{
+  "info": {
+    "_postman_id": "25f08f8a-f07f-4de2-9a7b-64ecfbfb08be",
+    "name": "Microservice Training Healthcare Stack",
+    "description": "Smoke-test collection for the Java/Spring healthcare microservices training stack. Run in order after `docker compose up --build`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 Platform",
+      "item": [
+        {
+          "name": "Eureka Dashboard",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8761"
+          }
+        },
+        {
+          "name": "RabbitMQ Management UI",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:15672"
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 Tenant Service via Gateway REST",
+      "item": [
+        {
+          "name": "Create Tenant",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('tenant created', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('tenantId', json.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tenant A Clinic\",\n  \"location\": \"Istanbul\",\n  \"notificationProvider\": \"AWS_SNS\"\n}"
+            },
+            "url": "{{gatewayUrl}}/tenants"
+          }
+        },
+        {
+          "name": "List Tenants",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/tenants"
+          }
+        },
+        {
+          "name": "Tenant Notification Provider",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/tenants/{{tenantId}}/notification-provider"
+          }
+        },
+        {
+          "name": "Create Appointment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('appointment created', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('appointmentId', json.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": {{tenantId}},\n  \"patientId\": {{patientId}},\n  \"physicianId\": {{physicianId}},\n  \"startsAt\": \"2026-07-25T09:00:00Z\"\n}"
+            },
+            "url": "{{gatewayUrl}}/appointments"
+          }
+        },
+        {
+          "name": "Create Appointment Sync with gRPC Enrichment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('sync appointment created', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('appointmentId', json.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": {{tenantId}},\n  \"patientId\": {{patientId}},\n  \"physicianId\": {{physicianId}},\n  \"startsAt\": \"2026-07-27T09:00:00Z\"\n}"
+            },
+            "url": "{{gatewayUrl}}/appointments/sync"
+          }
+        },
+        {
+          "name": "Start Appointment Async with gRPC Enrichment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('async appointment accepted', function () { pm.response.to.have.status(202); });",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('appointmentOperationId', json.operationId);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": {{tenantId}},\n  \"patientId\": {{patientId}},\n  \"physicianId\": {{physicianId}},\n  \"startsAt\": \"2026-07-28T09:00:00Z\"\n}"
+            },
+            "url": "{{gatewayUrl}}/appointments/async"
+          }
+        },
+        {
+          "name": "Appointment Async Status",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/appointments/async/{{appointmentOperationId}}"
+          }
+        },
+        {
+          "name": "List Appointments by Tenant",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/appointments?tenantId={{tenantId}}"
+          }
+        },
+        {
+          "name": "Create Announcement",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('announcement created', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('announcementId', json.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": {{tenantId}},\n  \"title\": \"New cardiology hours\",\n  \"body\": \"Cardiology appointments are available on Saturday morning.\"\n}"
+            },
+            "url": "{{gatewayUrl}}/announcements"
+          }
+        },
+        {
+          "name": "List Announcements by Tenant",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/announcements?tenantId={{tenantId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Physician Service via Gateway REST",
+      "item": [
+        {
+          "name": "Create Physician",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('physician created', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('physicianId', json.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": {{tenantId}},\n  \"fullName\": \"Dr. Ada Lovelace\",\n  \"specialty\": \"Cardiology\"\n}"
+            },
+            "url": "{{gatewayUrl}}/physicians"
+          }
+        },
+        {
+          "name": "List Physicians by Tenant",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/physicians?tenantId={{tenantId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Patient Service via Gateway REST",
+      "item": [
+        {
+          "name": "Create Patient",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('patient created', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('patientId', json.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": {{tenantId}},\n  \"fullName\": \"Grace Hopper\",\n  \"medicalRecordNumber\": \"MRN-10001\",\n  \"phoneNumber\": \"+905551112233\"\n}"
+            },
+            "url": "{{gatewayUrl}}/patients"
+          }
+        },
+        {
+          "name": "Get Patient",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/patients/{{patientId}}"
+          }
+        },
+        {
+          "name": "List Patients by Tenant",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/patients?tenantId={{tenantId}}"
+          }
+        },
+        {
+          "name": "Add Patient Medical History",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('history entry created', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('medicalHistoryEntryId', json.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"summary\": \"Patient reports improved energy after treatment plan update\"\n}"
+            },
+            "url": "{{gatewayUrl}}/patients/{{patientId}}/history"
+          }
+        },
+        {
+          "name": "List Patient Medical History",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/patients/{{patientId}}/history"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Search Service via Gateway REST",
+      "item": [
+        {
+          "name": "Index Patient History Async REST",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": {{tenantId}},\n  \"patientId\": {{patientId}},\n  \"summary\": \"Annual cardiology checkup, blood pressure stable\"\n}"
+            },
+            "url": "{{gatewayUrl}}/search/index"
+          }
+        },
+        {
+          "name": "Search Patient History",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/search/patient-history?tenantId={{tenantId}}&term=cardiology"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Checkout Saga via Gateway REST",
+      "item": [
+        {
+          "name": "Start Checkout Async REST",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('checkout accepted', function () { pm.response.to.have.status(202); });",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('checkoutSessionId', json.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": {{tenantId}},\n  \"patientId\": {{patientId}},\n  \"amount\": 125.50\n}"
+            },
+            "url": "{{gatewayUrl}}/checkout/sessions"
+          }
+        },
+        {
+          "name": "Checkout Status",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/checkout/sessions/{{checkoutSessionId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 Notification Service via Gateway REST",
+      "item": [
+        {
+          "name": "List Notification Deliveries",
+          "description": "Run after Start Checkout. If the list is empty, wait a second and run again because RabbitMQ delivery is asynchronous.",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/notifications?tenantId={{tenantId}}"
+          }
+        },
+        {
+          "name": "Send Appointment Notification Sync with gRPC Message Fill",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": {{tenantId}},\n  \"patientId\": {{patientId}},\n  \"physicianId\": {{physicianId}}\n}"
+            },
+            "url": "{{gatewayUrl}}/notifications/appointment/sync"
+          }
+        },
+        {
+          "name": "Start Appointment Notification Async with gRPC Message Fill",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('async notification accepted', function () { pm.response.to.have.status(202); });",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('notificationOperationId', json.operationId);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": {{tenantId}},\n  \"patientId\": {{patientId}},\n  \"physicianId\": {{physicianId}}\n}"
+            },
+            "url": "{{gatewayUrl}}/notifications/appointment/async"
+          }
+        },
+        {
+          "name": "Appointment Notification Async Status",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/notifications/appointment/async/{{notificationOperationId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 Direct GraphQL Examples",
+      "item": [
+        {
+          "name": "Tenant GraphQL - List Tenants",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query { tenants { id name location notificationProvider } }\"\n}"
+            },
+            "url": "{{tenantUrl}}/graphql"
+          }
+        },
+        {
+          "name": "Tenant GraphQL - Create Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($tenantId: ID!, $patientId: ID!, $physicianId: ID!, $startsAt: String!) { createAppointment(tenantId: $tenantId, patientId: $patientId, physicianId: $physicianId, startsAt: $startsAt) { id tenantId patientId physicianId startsAt status } }\",\n  \"variables\": {\n    \"tenantId\": \"{{tenantId}}\",\n    \"patientId\": \"{{patientId}}\",\n    \"physicianId\": \"{{physicianId}}\",\n    \"startsAt\": \"2026-07-26T10:00:00Z\"\n  }\n}"
+            },
+            "url": "{{tenantUrl}}/graphql"
+          }
+        },
+        {
+          "name": "Tenant GraphQL - List Appointments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query($tenantId: ID!) { appointments(tenantId: $tenantId) { id patientId physicianId startsAt status } }\",\n  \"variables\": {\n    \"tenantId\": \"{{tenantId}}\"\n  }\n}"
+            },
+            "url": "{{tenantUrl}}/graphql"
+          }
+        },
+        {
+          "name": "Tenant GraphQL - Create Announcement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($tenantId: ID!, $title: String!, $body: String!) { createAnnouncement(tenantId: $tenantId, title: $title, body: $body) { id tenantId title body publishedAt } }\",\n  \"variables\": {\n    \"tenantId\": \"{{tenantId}}\",\n    \"title\": \"GraphQL announcement\",\n    \"body\": \"This announcement was created from Postman GraphQL.\"\n  }\n}"
+            },
+            "url": "{{tenantUrl}}/graphql"
+          }
+        },
+        {
+          "name": "Tenant GraphQL - List Announcements",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query($tenantId: ID!) { announcements(tenantId: $tenantId) { id title body publishedAt } }\",\n  \"variables\": {\n    \"tenantId\": \"{{tenantId}}\"\n  }\n}"
+            },
+            "url": "{{tenantUrl}}/graphql"
+          }
+        },
+        {
+          "name": "Patient GraphQL - List Patients",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query($tenantId: ID!) { patients(tenantId: $tenantId) { id fullName medicalRecordNumber phoneNumber } }\",\n  \"variables\": {\n    \"tenantId\": \"{{tenantId}}\"\n  }\n}"
+            },
+            "url": "{{patientUrl}}/graphql"
+          }
+        },
+        {
+          "name": "Patient GraphQL - Add Medical History",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($patientId: ID!, $summary: String!) { addMedicalHistoryEntry(patientId: $patientId, summary: $summary) { id patientId summary occurredAt } }\",\n  \"variables\": {\n    \"patientId\": \"{{patientId}}\",\n    \"summary\": \"GraphQL-created history entry from Postman\"\n  }\n}"
+            },
+            "url": "{{patientUrl}}/graphql"
+          }
+        },
+        {
+          "name": "Patient GraphQL - List Medical History",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query($patientId: ID!) { medicalHistory(patientId: $patientId) { id summary occurredAt } }\",\n  \"variables\": {\n    \"patientId\": \"{{patientId}}\"\n  }\n}"
+            },
+            "url": "{{patientUrl}}/graphql"
+          }
+        },
+        {
+          "name": "Search GraphQL - Search History",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query($tenantId: ID!, $term: String!) { searchPatientHistory(tenantId: $tenantId, term: $term) { id patientId summary occurredAt } }\",\n  \"variables\": {\n    \"tenantId\": \"{{tenantId}}\",\n    \"term\": \"cardiology\"\n  }\n}"
+            },
+            "url": "{{searchUrl}}/graphql"
+          }
+        },
+        {
+          "name": "Checkout GraphQL - Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query($id: ID!) { checkoutStatus(id: $id) { id tenantId patientId amount status } }\",\n  \"variables\": {\n    \"id\": \"{{checkoutSessionId}}\"\n  }\n}"
+            },
+            "url": "{{checkoutUrl}}/graphql"
+          }
+        },
+        {
+          "name": "Notification GraphQL - Deliveries",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query($tenantId: ID!) { notifications(tenantId: $tenantId) { id patientId provider message deliveredAt } }\",\n  \"variables\": {\n    \"tenantId\": \"{{tenantId}}\"\n  }\n}"
+            },
+            "url": "{{notificationUrl}}/graphql"
+          }
+        }
+      ]
+    }
+  ]
+}

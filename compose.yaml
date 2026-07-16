@@ -1,0 +1,190 @@
+services:
+  rabbitmq:
+    image: rabbitmq:4-management
+    environment:
+      # RabbitMQ Management UI: http://localhost:15672
+      # Username: healthcare_admin
+      # Password: healthcare_admin
+      RABBITMQ_DEFAULT_USER: healthcare_admin
+      RABBITMQ_DEFAULT_PASS: healthcare_admin
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  discovery-server:
+    init: true
+    build:
+      context: .
+      dockerfile: discovery-server/Dockerfile
+    ports:
+      - "8761:8761"
+
+  api-gateway:
+    init: true
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    ports:
+      - "8080:8080"
+    depends_on:
+      - discovery-server
+
+  tenant-db:
+    image: mongo:8
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: tenant_root
+      MONGO_INITDB_ROOT_PASSWORD: tenant_root_password
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./compose/mongo/tenant-init.js:/docker-entrypoint-initdb.d/tenant-init.js:ro
+
+  physician-db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: physiciandb
+      POSTGRES_USER: healthcare
+      POSTGRES_PASSWORD: healthcare
+    ports:
+      - "5434:5432"
+
+  patient-db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: patientdb
+      POSTGRES_USER: healthcare
+      POSTGRES_PASSWORD: healthcare
+    ports:
+      - "5435:5432"
+
+  search-db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: searchdb
+      POSTGRES_USER: healthcare
+      POSTGRES_PASSWORD: healthcare
+    ports:
+      - "5436:5432"
+
+  checkout-db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: checkoutdb
+      POSTGRES_USER: healthcare
+      POSTGRES_PASSWORD: healthcare
+    ports:
+      - "5437:5432"
+
+  notification-db:
+    image: mongo:8
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: notification_root
+      MONGO_INITDB_ROOT_PASSWORD: notification_root_password
+    ports:
+      - "27018:27017"
+    volumes:
+      - ./compose/mongo/notification-init.js:/docker-entrypoint-initdb.d/notification-init.js:ro
+
+  tenant-service:
+    init: true
+    build:
+      context: .
+      dockerfile: tenant-service/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://tenant_user:tenant_password@tenant-db:27017/tenantdb?authSource=tenantdb
+      PATIENT_GRPC_TARGET: patient-service:9093
+      PHYSICIAN_GRPC_TARGET: physician-service:9092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    depends_on:
+      - tenant-db
+      - patient-service
+      - physician-service
+      - discovery-server
+
+  physician-service:
+    init: true
+    build:
+      context: .
+      dockerfile: physician-service/Dockerfile
+    ports:
+      - "8082:8082"
+      - "9092:9092"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://physician-db:5432/physiciandb
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    depends_on:
+      - physician-db
+      - discovery-server
+
+  patient-service:
+    init: true
+    build:
+      context: .
+      dockerfile: patient-service/Dockerfile
+    ports:
+      - "8083:8083"
+      - "9093:9093"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://patient-db:5432/patientdb
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    depends_on:
+      - patient-db
+      - discovery-server
+
+  search-service:
+    init: true
+    build:
+      context: .
+      dockerfile: search-service/Dockerfile
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://search-db:5432/searchdb
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    depends_on:
+      - search-db
+      - discovery-server
+
+  checkout-service:
+    init: true
+    build:
+      context: .
+      dockerfile: checkout-service/Dockerfile
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://checkout-db:5432/checkoutdb
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: healthcare_admin
+      SPRING_RABBITMQ_PASSWORD: healthcare_admin
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    depends_on:
+      - checkout-db
+      - rabbitmq
+      - discovery-server
+
+  notification-service:
+    init: true
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://notification_user:notification_password@notification-db:27017/notificationdb?authSource=notificationdb
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: healthcare_admin
+      SPRING_RABBITMQ_PASSWORD: healthcare_admin
+      PATIENT_GRPC_TARGET: patient-service:9093
+      PHYSICIAN_GRPC_TARGET: physician-service:9092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    depends_on:
+      - notification-db
+      - rabbitmq
+      - patient-service
+      - physician-service
+      - discovery-server

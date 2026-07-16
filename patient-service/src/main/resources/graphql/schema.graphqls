@@ -1,0 +1,24 @@
+type Query {
+  patients(tenantId: ID!): [Patient!]!
+  medicalHistory(patientId: ID!): [MedicalHistoryEntry!]!
+}
+
+type Mutation {
+  createPatient(tenantId: ID!, fullName: String!, medicalRecordNumber: String!, phoneNumber: String!): Patient!
+  addMedicalHistoryEntry(patientId: ID!, summary: String!): MedicalHistoryEntry!
+}
+
+type Patient {
+  id: ID!
+  tenantId: ID!
+  fullName: String!
+  medicalRecordNumber: String!
+  phoneNumber: String!
+}
+
+type MedicalHistoryEntry {
+  id: ID!
+  patientId: ID!
+  summary: String!
+  occurredAt: String!
+}

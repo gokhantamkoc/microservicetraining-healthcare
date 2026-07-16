@@ -1,0 +1,30 @@
+server:
+  port: 8082
+
+grpc:
+  server:
+    port: ${GRPC_SERVER_PORT:9092}
+
+spring:
+  application:
+    name: physician-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5434/physiciandb}
+    username: ${SPRING_DATASOURCE_USERNAME:healthcare}
+    password: ${SPRING_DATASOURCE_PASSWORD:healthcare}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    defer-datasource-initialization: true
+    open-in-view: false
+  sql:
+    init:
+      mode: always
+  graphql:
+    graphiql:
+      enabled: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}

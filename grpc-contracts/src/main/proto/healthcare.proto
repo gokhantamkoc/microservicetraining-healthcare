@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package healthcare;
+
+option java_multiple_files = true;
+option java_package = "com.gokhantamkoc.microservicetraining.healthcare.grpc";
+
+service PatientLookupService {
+  rpc GetPatient(PatientRequest) returns (PatientReply);
+}
+
+service PhysicianLookupService {
+  rpc GetPhysician(PhysicianRequest) returns (PhysicianReply);
+}
+
+service TenantPreferenceService {
+  rpc GetNotificationPreference(TenantRequest) returns (TenantPreferenceReply);
+}
+
+service SearchIndexService {
+  rpc StreamPatientHistory(PatientRequest) returns (stream PatientHistoryReply);
+}
+
+message PatientRequest {
+  string patient_id = 1;
+}
+
+message PatientReply {
+  string patient_id = 1;
+  string tenant_id = 2;
+  string full_name = 3;
+  bool active = 4;
+  string phone_number = 5;
+}
+
+message PhysicianRequest {
+  string physician_id = 1;
+}
+
+message PhysicianReply {
+  string physician_id = 1;
+  string tenant_id = 2;
+  string full_name = 3;
+  string specialty = 4;
+  bool active = 5;
+}
+
+message TenantRequest {
+  string tenant_id = 1;
+}
+
+message TenantPreferenceReply {
+  string tenant_id = 1;
+  string provider = 2;
+}
+
+message PatientHistoryReply {
+  string patient_id = 1;
+  string summary = 2;
+  string occurred_at = 3;
+}

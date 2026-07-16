@@ -1,0 +1,32 @@
+type Query {
+  notifications(tenantId: ID!): [NotificationDelivery!]!
+  appointmentNotificationStatus(operationId: String!): NotificationOperationStatus!
+}
+
+type Mutation {
+  sendAppointmentNotification(tenantId: ID!, patientId: ID!, physicianId: ID!): NotificationDelivery!
+  sendAppointmentNotificationAsync(tenantId: ID!, patientId: ID!, physicianId: ID!): NotificationOperationStatus!
+}
+
+type NotificationDelivery {
+  id: ID!
+  tenantId: ID!
+  patientId: ID!
+  physicianId: ID
+  provider: NotificationProvider!
+  message: String!
+  deliveredAt: String!
+}
+
+type NotificationOperationStatus {
+  operationId: String!
+  status: String!
+  delivery: NotificationDelivery
+  errorMessage: String
+}
+
+enum NotificationProvider {
+  AWS_SNS
+  TWILIO
+  FCM
+}

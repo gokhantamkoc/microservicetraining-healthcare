@@ -1,0 +1,12 @@
+type Query {
+  searchPatientHistory(tenantId: ID!, term: String!): [PatientHistoryIndex!]!
+}
+
+type PatientHistoryIndex {
+  id: ID!
+  tenantId: ID!
+  patientId: ID!
+  summary: String!
+  occurredAt: String!
+}
+

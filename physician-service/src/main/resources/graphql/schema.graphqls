@@ -1,0 +1,16 @@
+type Query {
+  physicians(tenantId: ID!): [Physician!]!
+}
+
+type Mutation {
+  createPhysician(tenantId: ID!, fullName: String!, specialty: String!): Physician!
+}
+
+type Physician {
+  id: ID!
+  tenantId: ID!
+  fullName: String!
+  specialty: String!
+  active: Boolean!
+}
+
